@@ -16,8 +16,8 @@ class MessageTokenizer:
         any other item being meta-data
         '''
         m = {}
-        for k, v in message:
-            if v == 'body':
+        for k, v in message.iteritems():
+            if k == 'body':
                 self.tokenize_message_body(m, v)
             else:
                 self.add_word(m, '{0}*{1}'.format(k, v))
