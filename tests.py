@@ -114,6 +114,13 @@ class TestSpam(unittest.TestCase):
         self.assertIn('from*320002', c.data, "Expected from header in map: {0}".format(c.data))
         self.assertEqual(c.data['from*320002'], 1, "Unexpected value for from*320002")
 
+    def test_score_message(self):
+        processor = spam.SpamProcessor()
+        processor.flag_as_bad("My name is Bruno and I am a lawyer with lots of money to give you")
+        processor.flag_as_good("Hello there, my name is James and I am looking for Scot")
+        s = processor.score("Do I need to see James?")
+        self.assertEqual(s[1], 'Good', "Unexpected score for message: {0}".format(s))
+        
 if __name__ == '__main__':
     unittest.main()
     

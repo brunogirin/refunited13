@@ -89,7 +89,8 @@ class SpamProcessor:
         elif nbad == 0 or self.num_bad_msg == 0:
             p = 0.1
         else:
-            p = (nbad/self.num_bad_msg) / (nbad/self.num_bad_msg) + (ngood/self.num_good_msg)
+            p = (nbad/self.num_bad_msg) / ((nbad/self.num_bad_msg) + (ngood/self.num_good_msg))
+        print "{0}: {1}".format(word, p)
         return p
     
     def score_message_corpus(self, mcorpus):
@@ -100,10 +101,13 @@ class SpamProcessor:
         plist.sort(key=lambda x: x[2])
         plist.reverse()
         slist = plist[:10]
-        pp = reduce(lambda x, y: x*y, slist)
-        np = reduce(lambda x, y: x*(1-y), slist)
-        s = pp/(pp+np)
-        return s
+        pp = reduce(lambda x, y: x*y, [v[1] for v in slist])
+        np = reduce(lambda x, y: x*(1-y), [v[1] for v in slist])
+        if (pp+np == 0):
+            s = 0.5
+        else:
+            s = pp/(pp+np)
+        return (s, plist)
     
     def tokenize_message(self, msg):
         return self.tok.tokenize_message({ 'body': msg })
@@ -116,11 +120,11 @@ class SpamProcessor:
         
     def score(self, msg):
         s = self.score_message_corpus(self.tokenize_message(msg))
-        if (s > 0.9):
+        if (s[0] > 0.9):
             m = 'Bad'
-        elif (s < 0.1):
+        elif (s[0] < 0.1):
             m = 'Good'
         else:
             m = 'Neutral'
-        return (s, m)
+        return (s[0], m, s[1])
         
