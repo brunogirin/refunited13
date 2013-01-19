@@ -34,7 +34,7 @@ root.minsize(640,480)
 #main_frame = Tk.Frame(master=root)
 #main_frame.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=1, )
 
-label = Label(master=root, text="Spam(er) detection system")
+label = Label(master=root, text="Spam(mer) detection system")
 label.pack()
 
 msg = Label(master=root, text=current_message)
