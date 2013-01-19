@@ -3,6 +3,7 @@ Created on 19 Jan 2013
 
 @author: bruno
 '''
+import math
 
 SEPARATORS=" \n\t\r.,;:'\"()"
 
@@ -91,4 +92,15 @@ class SpamProcessor:
         return p
     
     def score_message_corpus(self, mcorpus):
-        pass
+        pmap = {}
+        for k in mcorpus.data.iterkeys():
+            pmap[k] = self.score_word(k)
+        plist = [(k, v, math.fabs(v - 0.5)) for k, v in pmap.iteritems()]
+        plist.sort(key=lambda x: x[2])
+        plist.reverse()
+        slist = plist[:10]
+        pp = reduce(lambda x, y: x*y, slist)
+        np = reduce(lambda x, y: x*(1-y), slist)
+        s = pp/(pp+np)
+        return s
+        
