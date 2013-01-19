@@ -1,6 +1,7 @@
 import unittest
 import api
 import json
+import messages
 
 import requests
 from requests.auth import HTTPDigestAuth
@@ -62,6 +63,7 @@ class TestApi(unittest.TestCase):
 class TestMessaging(unittest.TestCase):
     def setUp(self):
         self.api  = api.ApiServer()
+        self.handler = messages.MessageHandler()
 
         def createUser(first_name, last_name):
             j = json.loads(self.api.get("usernamegenerator", {"givenName":first_name, "surName":last_name}).text)
@@ -69,15 +71,23 @@ class TestMessaging(unittest.TestCase):
             j['surName'] = last_name
             j['password'] = "h3ckday"
             result = json.loads(self.api.post("profile", params=j).text)
-            return result["profileId"]
+            return result["profile"]["id"]
 
         self.one = createUser("Hacker", "Daily")
         self.two = createUser("Hacking", "Often")
 
     def test_users_created(self):
-        print self.one
-        print self.two
+        self.assertGreater(self.one, 0)
+        self.assertGreater(self.two, 0)
 
+    def test_sending_message(self):
+        messages = self.handler.read_messages(self.two)
+        self.handler.send_message(self.one, self.two, "Hello World")
+        new_messages = self.handler.read_messages(self.two)
+        self.handler.send_message(self.two, self.one, "Hi Computer")
+        self.assertEqual(len(messages["threads"]), 0)
+        self.assertEqual(len(new_messages["threads"]), 1)
+        self.assertEqual(len(self.handler.read_messages(self.one)["threads"]),1)
 
 class TestSpam(unittest.TestCase):
     def setUp(self):
