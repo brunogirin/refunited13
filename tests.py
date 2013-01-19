@@ -120,6 +120,11 @@ class TestSpam(unittest.TestCase):
         processor.flag_as_good("Hello there, my name is James and I am looking for Scot")
         s = processor.score("Do I need to see James?")
         self.assertEqual(s[1], 'Neutral', "Unexpected score for message: {0}".format(s))
+
+    def test_score_message_no_data(self):
+        processor = spam.SpamProcessor()
+        s = processor.score("Do I need to see James?")
+        self.assertEqual(s[1], 'Neutral', "Unexpected score for message: {0}".format(s))
         
 if __name__ == '__main__':
     unittest.main()
