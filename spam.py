@@ -40,5 +40,6 @@ class MessageTokenizer:
             if body[i] in SEPARATORS:
                 if i > s:
                     self.add_word(m, body[s:i])
-                s = i
+                s = i + 1
             i = i + 1
+        return m

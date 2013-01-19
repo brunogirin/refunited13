@@ -1,6 +1,7 @@
 import unittest
 import api
 import json
+import spam
 
 import requests
 from requests.auth import HTTPDigestAuth
@@ -83,8 +84,12 @@ class TestSpam(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_something(self):
-        pass
+    def test_tokenize_message_body(self):
+        tok = spam.MessageTokenizer()
+        m = {}
+        tok.tokenize_message_body(m, "This is a simple message")
+        self.assertIn('simple', m, "Expected the word simple in the map: {0}".format(m))
+        self.assertEqual(m['simple'], 1, "Unexpected value for simple")
 
 if __name__ == '__main__':
     unittest.main()
