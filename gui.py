@@ -5,6 +5,7 @@ import load_data
 data = load_data.Data()
 processor = spam.SpamProcessor()
 current_message = data.getNext()
+details = None
 
 def spam():
     processor.flag_as_bad(current_message)
@@ -18,13 +19,20 @@ def score():
     score = processor.score(current_message)
     n = score[0]
     lbl = score[1]
-    score_label.text = str(n) + " " + str(lbl)
+    details = score[2]
+    print details
+    score_label.config(text=str(n) + " " + str(lbl))
+    score_label.update_idletasks()
 
 def next():
     current_message = str(data.getNext())
+    msg.config(text=current_message)
+    msg.update_idletasks()
     score()
 
 def analyse():
+#    msg.config(text=str(details))
+#    msg.update_idletasks()
     pass
 
 root = Tk()
