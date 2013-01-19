@@ -23,12 +23,10 @@ class ApiServer:
         return headers
         
     def get(self, url, params={}, raw = False):
-        #headers=self.create_headers('')
-        #print 'Headers: {0}'.format(headers)
         return requests.get(API_CORE_URL + url,
                             auth=self.auth,
-                            headers=self.create_headers('')#,
-                            #params=params
+                            headers=self.create_headers(''),
+                            params=params
                             )
     
     def post(self, url, params={}, raw=False):
