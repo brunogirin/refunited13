@@ -20,7 +20,7 @@ def score():
     n = score[0]
     lbl = score[1]
     details = score[2]
-    print details
+    #print details
     score_label.config(text=str(n) + " " + str(lbl))
     score_label.update_idletasks()
 
