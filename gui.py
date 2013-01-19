@@ -1,5 +1,6 @@
 from Tkinter import *
 import spam
+import load_data
 
 data = load_data.Data()
 processor = spam.SpamProcessor()
