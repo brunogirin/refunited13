@@ -4,7 +4,7 @@ import load_data
 
 data = load_data.Data()
 processor = spam.SpamProcessor()
-current_message = ""
+current_message = data.getNext()
 
 def spam():
     processor.flag_as_bad(current_message)
