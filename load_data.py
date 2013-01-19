@@ -15,7 +15,7 @@ class Data:
                 self.all_msg.append(msg)
         self.idx = 0
 
-    def get_next(self):
+    def getNext(self):
         if self.idx >= len(self.all_msg):
             return None
         else:
