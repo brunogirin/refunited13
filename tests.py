@@ -1,5 +1,6 @@
 import unittest
 import api
+import json
 
 import requests
 from requests.auth import HTTPDigestAuth
@@ -43,6 +44,20 @@ class TestApi(unittest.TestCase):
     def test_search(self):
         self.assertNotRegexpMatches(self.api.get("search", {"name":"james"}).text, "HTTP Digest")
 
+    def test_generate_username(self):
+        result = self.api.get("usernamegenerator", {"givenName":"Hack", "surName":"Day"})
+        self.assertEqual(200, result.status_code)
+        self.assertRegexpMatches(result.text, "hack")
+
+    def test_create_profile(self):
+        generatedUserName = self.api.get("usernamegenerator", {"givenName":"Hack", "surName":"Day"}).text
+        j = json.loads(generatedUserName)
+        j['givenName'] = "Hack"
+        j['surName'] = "Day"
+        j['password'] = "h3ckday"
+        result = self.api.post("profile", params=j)
+        self.assertRegexpMatches(result.text, "profile")
+        self.assertEqual(result.status_code, 200)
 
 class TestSpam(unittest.TestCase):
     def setUp(self):
