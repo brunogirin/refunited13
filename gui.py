@@ -21,7 +21,7 @@ def score():
     score_label.text = str(n) + " " + str(lbl)
 
 def next():
-    current_message = data.getNext()
+    current_message = str(data.getNext())
     score()
 
 def analyse():
