@@ -15,31 +15,37 @@ class MessageTokenizer:
         The message is a dict with item 'body' as the body of the message,
         any other item being meta-data
         '''
-        m = {}
+        c = Corpus()
         for k, v in message.iteritems():
             if k == 'body':
-                self.tokenize_message_body(m, v)
+                self.tokenize_message_body(c, v)
             else:
-                self.add_word(m, '{0}*{1}'.format(k, v))
-        return m
+                c.add_word('{0}*{1}'.format(k, v))
+        return c
     
-    def add_word(self, m, word):
-        self.add_word_count(m, word, 1)
-    
-    def add_word_count(self, m, word, count):
-        if word in m:
-            n = m[word]+count
-        else:
-            n = count
-        m[word] = n
-    
-    def tokenize_message_body(self, m, body):
+    def tokenize_message_body(self, c, body):
         s = 0
         i = 0
         while i < len(body):
             if body[i] in SEPARATORS:
                 if i > s:
-                    self.add_word(m, body[s:i])
+                    c.add_word(body[s:i])
                 s = i + 1
             i = i + 1
-        return m
+        return c
+
+class Corpus:
+    def __init__(self):
+        self.data = {}
+        
+    def add_word(self, word):
+        self.add_word_count(word, 1)
+    
+    def add_word_count(self, word, count):
+        if word in self.data:
+            n = self.data[word]+count
+        else:
+            n = count
+        self.data[word] = n
+    
+        

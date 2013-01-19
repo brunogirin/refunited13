@@ -96,10 +96,10 @@ class TestSpam(unittest.TestCase):
 
     def test_tokenize_message_body(self):
         tok = spam.MessageTokenizer()
-        m = {}
-        tok.tokenize_message_body(m, "This is a simple message")
-        self.assertIn('simple', m, "Expected the word simple in the map: {0}".format(m))
-        self.assertEqual(m['simple'], 1, "Unexpected value for simple")
+        c = spam.Corpus()
+        tok.tokenize_message_body(c, "This is a simple message")
+        self.assertIn('simple', c.data, "Expected the word simple in the map: {0}".format(c.data))
+        self.assertEqual(c.data['simple'], 1, "Unexpected value for simple")
 
     def test_tokenize_message(self):
         tok = spam.MessageTokenizer()
@@ -108,11 +108,11 @@ class TestSpam(unittest.TestCase):
                'to': '320202',
                'body': "This is a simple message"
                }
-        m = tok.tokenize_message(msg)
-        self.assertIn('simple', m, "Expected the word simple in the map: {0}".format(m))
-        self.assertEqual(m['simple'], 1, "Unexpected value for simple")
-        self.assertIn('from*320002', m, "Expected from header in map: {0}".format(m))
-        self.assertEqual(m['from*320002'], 1, "Unexpected value for from*320002")
+        c = tok.tokenize_message(msg)
+        self.assertIn('simple', c.data, "Expected the word simple in the map: {0}".format(c.data))
+        self.assertEqual(c.data['simple'], 1, "Unexpected value for simple")
+        self.assertIn('from*320002', c.data, "Expected from header in map: {0}".format(c.data))
+        self.assertEqual(c.data['from*320002'], 1, "Unexpected value for from*320002")
 
 if __name__ == '__main__':
     unittest.main()
