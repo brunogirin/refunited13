@@ -69,6 +69,7 @@ class SpamProcessor:
         self.bad_corpus = Corpus()
         self.num_good_msg = 0
         self.num_bad_msg = 0
+        self.tok = MessageTokenizer()
     
     def add_bad_message_corpus(self, mcorpus):
         self.bad_corpus.add_message_corpus(mcorpus)
@@ -103,4 +104,23 @@ class SpamProcessor:
         np = reduce(lambda x, y: x*(1-y), slist)
         s = pp/(pp+np)
         return s
+    
+    def tokenize_message(self, msg):
+        return self.tok.tokenize_message({ 'body': msg })
+    
+    def flag_as_good(self, msg):
+        self.add_good_message_corpus(self.tokenize_message(msg))
+        
+    def flag_as_bad(self, msg):
+        self.add_bad_message_corpus(self.tokenize_message(msg))
+        
+    def score(self, msg):
+        s = self.score_message_corpus(self.tokenize_message(msg))
+        if (s > 0.9):
+            m = 'Bad'
+        elif (s < 0.1):
+            m = 'Good'
+        else:
+            m = 'Neutral'
+        return (s, m)
         
