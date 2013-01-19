@@ -59,6 +59,26 @@ class TestApi(unittest.TestCase):
         self.assertRegexpMatches(result.text, "profile")
         self.assertEqual(result.status_code, 200)
 
+class TestMessaging(unittest.TestCase):
+    def setUp(self):
+        self.api  = api.ApiServer()
+
+        def createUser(first_name, last_name):
+            j = json.loads(self.api.get("usernamegenerator", {"givenName":first_name, "surName":last_name}).text)
+            j['givenName'] = first_name
+            j['surName'] = last_name
+            j['password'] = "h3ckday"
+            result = json.loads(self.api.post("profile", params=j).text)
+            return result["profileId"]
+
+        self.one = createUser("Hacker", "Daily")
+        self.two = createUser("Hacking", "Often")
+
+    def test_users_created(self):
+        print self.one
+        print self.two
+
+
 class TestSpam(unittest.TestCase):
     def setUp(self):
         pass
