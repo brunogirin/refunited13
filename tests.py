@@ -18,6 +18,10 @@ class TestApi(unittest.TestCase):
     def test_send_message(self):
         pass
 
+    def test_search(self):
+        self.assertNotRegexpMatches(self.api.get("search", {"name":"james"}).text, "HTTP Digest")
+
+
 class TestSpam(unittest.TestCase):
     def setUp(self):
         pass
