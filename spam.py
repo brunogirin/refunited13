@@ -5,7 +5,7 @@ Created on 19 Jan 2013
 '''
 import math
 
-SEPARATORS=" \n\t\r.,;:'\"()"
+SEPARATORS=" \n\t\r.,;:'\"()!?"
 
 class MessageTokenizer:
     def __init__(self):
@@ -89,8 +89,7 @@ class SpamProcessor:
         elif nbad == 0 or self.num_bad_msg == 0:
             p = 0.1
         else:
-            p = (nbad/self.num_bad_msg) / ((nbad/self.num_bad_msg) + (ngood/self.num_good_msg))
-        print "{0}: {1}".format(word, p)
+            p = (float(nbad)/float(self.num_bad_msg)) / ((float(nbad)/float(self.num_bad_msg)) + (float(ngood)/float(self.num_good_msg)))
         return p
     
     def score_message_corpus(self, mcorpus):
