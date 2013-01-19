@@ -48,4 +48,47 @@ class Corpus:
             n = count
         self.data[word] = n
     
-        
+    def add_corpus(self, corpus):
+        for k, v in corpus.data.iteritems():
+            self.add_word_count(k, v)
+    
+    def add_message_corpus(self, mcorpus):
+        for k in mcorpus.data.iterkeys():
+            self.add_word(k)
+    
+    def get_word_count(self, word):
+        if word in self.data:
+            return self.data[word]
+        else:
+            return 0
+
+class SpamProcessor:
+    def __init__(self):
+        self.good_corpus = Corpus()
+        self.bad_corpus = Corpus()
+        self.num_good_msg = 0
+        self.num_bad_msg = 0
+    
+    def add_bad_message_corpus(self, mcorpus):
+        self.bad_corpus.add_message_corpus(mcorpus)
+        self.num_bad_msg = self.num_bad_msg + 1
+    
+    def add_good_message_corpus(self, mcorpus):
+        self.good_corpus.add_message_corpus(mcorpus)
+        self.num_good_msg = self.num_good_msg + 1
+    
+    def score_word(self, word):
+        ngood = self.good_corpus.get_word_count(word)
+        nbad = self.bad_corpus.get_word_count(word)
+        if (ngood == 0 and nbad == 0) or (self.num_good_msg == 0 and self.num_bad_msg == 0):
+            p = 0.5
+        elif ngood == 0 or self.num_good_msg == 0:
+            p = 0.99
+        elif nbad == 0 or self.num_bad_msg == 0:
+            p = 0.1
+        else:
+            p = (nbad/self.num_bad_msg) / (nbad/self.num_bad_msg) + (ngood/self.num_good_msg)
+        return p
+    
+    def score_message_corpus(self, mcorpus):
+        pass
