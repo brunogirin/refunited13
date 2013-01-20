@@ -16,24 +16,22 @@ class MessageTokenizer:
         The message is a dict with item 'body' as the body of the message,
         any other item being meta-data
         '''
-        c = Corpus()
         for k, v in message.iteritems():
             if k == 'body':
-                self.tokenize_message_body(c, v)
+                for t in self.tokenize_message_body(v):
+                    yield t
             else:
-                c.add_word('{0}*{1}'.format(k, v))
-        return c
+                yield '{0}*{1}'.format(k, v)
     
-    def tokenize_message_body(self, c, body):
+    def tokenize_message_body(self, body):
         s = 0
         i = 0
         while i < len(body):
             if body[i] in SEPARATORS:
                 if i > s:
-                    c.add_word(body[s:i])
+                    yield body[s:i]
                 s = i + 1
             i = i + 1
-        return c
 
 class Corpus:
     def __init__(self):
@@ -53,9 +51,9 @@ class Corpus:
         for k, v in corpus.data.iteritems():
             self.add_word_count(k, v)
     
-    def add_message_corpus(self, mcorpus):
-        for k in mcorpus.data.iterkeys():
-            self.add_word(k)
+    def add_message_tokens(self, tokens):
+        for t in tokens:
+            self.add_word(t)
     
     def get_word_count(self, word):
         if word in self.data:
@@ -71,12 +69,12 @@ class SpamProcessor:
         self.num_bad_msg = 0
         self.tok = MessageTokenizer()
     
-    def add_bad_message_corpus(self, mcorpus):
-        self.bad_corpus.add_message_corpus(mcorpus)
+    def add_bad_message_tokens(self, tokens):
+        self.bad_corpus.add_message_tokens(tokens)
         self.num_bad_msg = self.num_bad_msg + 1
     
-    def add_good_message_corpus(self, mcorpus):
-        self.good_corpus.add_message_corpus(mcorpus)
+    def add_good_message_tokens(self, tokens):
+        self.good_corpus.add_message_tokens(tokens)
         self.num_good_msg = self.num_good_msg + 1
     
     def score_word(self, word):
@@ -92,10 +90,10 @@ class SpamProcessor:
             p = (float(nbad)/float(self.num_bad_msg)) / ((float(nbad)/float(self.num_bad_msg)) + (float(ngood)/float(self.num_good_msg)))
         return p
     
-    def score_message_corpus(self, mcorpus):
+    def score_message_tokens(self, tokens):
         pmap = {}
-        for k in mcorpus.data.iterkeys():
-            pmap[k] = self.score_word(k)
+        for t in tokens:
+            pmap[t] = self.score_word(t)
         plist = [(k, v, math.fabs(v - 0.5)) for k, v in pmap.iteritems()]
         plist.sort(key=lambda x: x[2])
         plist.reverse()
@@ -112,13 +110,13 @@ class SpamProcessor:
         return self.tok.tokenize_message({ 'body': msg })
     
     def flag_as_good(self, msg):
-        self.add_good_message_corpus(self.tokenize_message(msg))
+        self.add_good_message_tokens([t for t in self.tokenize_message(msg)])
         
     def flag_as_bad(self, msg):
-        self.add_bad_message_corpus(self.tokenize_message(msg))
+        self.add_bad_message_tokens([t for t in self.tokenize_message(msg)])
         
     def score(self, msg):
-        s = self.score_message_corpus(self.tokenize_message(msg))
+        s = self.score_message_tokens(self.tokenize_message(msg))
         if (s[0] > 0.9):
             m = 'Bad'
         elif (s[0] < 0.1):
