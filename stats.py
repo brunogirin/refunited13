@@ -19,9 +19,13 @@ class StatsGenerator:
                   }
         sample_len = sample_ratio * len(data.all_msg)
         matches = []
+        matches_good = []
+        matches_bad = []
         false_positives = []
         false_negatives = []
         neutrals = []
+        neutrals_good = []
+        neutrals_bad = []
         unexpected_mismatches = []
         for idx, d in enumerate(data.all_msg):
             msg = d[0]
@@ -39,21 +43,33 @@ class StatsGenerator:
                 actual_score_tag = score[1]
                 if expected_score_tag == actual_score_tag:
                     matches.append((d, score))
+                    if expected_score_tag == 'Good':
+                        matches_good.append((d, score))
+                    else:
+                        matches_bad.append((d, score))
                 elif expected_score_tag == 'Good' and actual_score_tag == 'Bad':
                     false_positives.append((d, score))
                 elif expected_score_tag == 'Bad' and actual_score_tag == 'Good':
                     false_negatives.append((d, score))
                 elif actual_score_tag == 'Neutral':
                     neutrals.append((d, score))
+                    if expected_score_tag == 'Good':
+                        neutrals_good.append((d, score))
+                    else:
+                        neutrals_bad.append((d, score))
                 else:
                     unexpected_mismatches.append((d, score))
         total = len(matches) + len(false_positives) + len(false_negatives) + len(neutrals) + len(unexpected_mismatches)
         return {
                 'total': total,
                 'matches': self.list_stats(matches, total),
+                'matches_good': self.list_stats(matches_good, total),
+                'matches_bad': self.list_stats(matches_bad, total),
+                'neutrals': self.list_stats(neutrals, total),
+                'neutrals_good': self.list_stats(neutrals_good, total),
+                'neutrals_bad': self.list_stats(neutrals_bad, total),
                 'false_positives': self.list_stats(false_positives, total, len(matches)),
                 'false_negatives': self.list_stats(false_negatives, total, len(matches)),
-                'neutrals': self.list_stats(neutrals, total),
                 'unexpected_mismatches': self.list_stats(unexpected_mismatches, total)
                 }
 
@@ -99,17 +115,24 @@ if __name__ == '__main__':
     if args.json:
         print json.dumps(results)
     elif args.csv:
-        print "Run,Matches,Neutrals,False positives,False negatives"
+        print "Run,Matches (all),Matches (good),Matches (bad),Neutrals (all),Neutrals (good),Neutrals (bad),False positives,False negatives"
         for rs in results:
             run = rs['run']
             result = rs['result']
-            run_cell = '"{0};{1}"'.format(
+            if len(run['options']) == 0:
+                run_cell = '"{0}; {1}"'.format(run['sample_ratio'], 'none')
+            else:
+                run_cell = '"{0}; {1}"'.format(
                                      run['sample_ratio'],
-                                     format(','.join([str(vv) for vv in run['options']])))
-            print '{0},{1},{2},{3},{4}'.format(
+                                     format(', '.join([str(vv) for vv in run['options']])))
+            print '{0},{1},{2},{3},{4},{5},{6},{7},{8}'.format(
                                                run_cell,
                                                result['matches'][1],
+                                               result['matches_good'][1],
+                                               result['matches_bad'][1],
                                                result['neutrals'][1],
+                                               result['neutrals_good'][1],
+                                               result['neutrals_bad'][1],
                                                result['false_positives'][1],
                                                result['false_negatives'][1]
                                                )
