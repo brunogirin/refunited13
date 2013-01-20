@@ -3,6 +3,8 @@ import api
 import json
 import spam
 import messages
+import load_data
+import stats
 
 import requests
 from requests.auth import HTTPDigestAuth
@@ -110,6 +112,17 @@ class TestSpam(unittest.TestCase):
         self.assertIn('simple', tokens, "Expected the word simple in the list: {0}".format(tokens))
         self.assertIn('from*320002', tokens, "Expected from header in list: {0}".format(tokens))
 
+    def test_generate_token_set(self):
+        tok = spam.MessageTokenizer()
+        msg = {
+               'from': '320002',
+               'to': '320202',
+               'body': "This is a simple message"
+               }
+        tokens = tok.generate_token_set(msg)
+        self.assertIn('simple', tokens, "Expected the word simple in the list: {0}".format(tokens))
+        self.assertIn('from*320002', tokens, "Expected from header in list: {0}".format(tokens))
+
     def test_score_message(self):
         processor = spam.SpamProcessor()
         processor.flag_as_bad("My name is Bruno and I am a lawyer with lots of money to give you")
@@ -122,6 +135,57 @@ class TestSpam(unittest.TestCase):
         s = processor.score("Do I need to see James?")
         self.assertEqual(s[1], 'Neutral', "Unexpected score for message: {0}".format(s))
         
+    def test_message_collection_no_options(self):
+        self.run_message_collection_stats(
+                                          [0.02, 0.01, 0.26, 0],
+                                          0.05,
+                                          []
+                                          )
+    
+    def test_message_collection_pairs(self):
+        self.run_message_collection_stats(
+                                          [0.02, 0.01, 0.17, 0],
+                                          0.05,
+                                          ['pairs']
+                                          )
+    
+    def run_message_collection_stats(self, expected_mm_ratios, sample_ratio, tok_options):
+        stats_gen = stats.StatsGenerator()
+        stats_results = stats_gen.process_message_collection(sample_ratio, tok_options)
+        actual_mm_ratios = [
+                          stats_results['false_positives'][1],
+                          stats_results['false_negatives'][1],
+                          stats_results['neutrals'][1],
+                          stats_results['unexpected_mismatches'][0]
+                          ]
+        success = reduce(lambda a, b: a and b, [act <= exp for (act, exp) in zip(actual_mm_ratios, expected_mm_ratios)])
+        if success == False:
+            self.fail(
+                      "Unexpected mismatch sizes: expected = {0}; actual = {1}".
+                      format(
+                             expected_mm_ratios,
+                             actual_mm_ratios
+                             ))
+            
+
+class TestData(unittest.TestCase):
+    def setUp(self):
+        pass
+    
+    def test_load_data(self):
+        data = load_data.Data()
+        self.assertEqual(0, len(data.neutral_msg), "Expected no neutral messages: {0}".format(data.neutral_msg))
+    
+    def test_get_next(self):
+        data = load_data.Data()
+        msg = data.getNext()
+        self.assertIsNotNone(msg, "First message should not be None")
+    
+    def test_get_next_result(self):
+        data = load_data.Data()
+        msg = data.getNext()
+        self.assertIsInstance(msg, basestring, "Message should be a string")
+            
 if __name__ == '__main__':
     unittest.main()
     

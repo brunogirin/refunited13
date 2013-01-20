@@ -7,9 +7,63 @@ import math
 
 SEPARATORS=" \n\t\r.,;:'\"()!?"
 
-class MessageTokenizer:
+class WordTokenizer:
     def __init__(self):
         pass
+    
+    def tokenize(self, data):
+        s = 0
+        i = 0
+        while i < len(data):
+            if data[i] in SEPARATORS:
+                if i > s:
+                    yield data[s:i]
+                s = i + 1
+            i = i + 1
+
+class WordPairTokenizer:
+    '''
+    For each word on the sub-stream, return that word plus the
+    concatenation of that word and its predecessor.
+    It is important that the sub-stream return words in order.
+    '''
+    def __init__(self, sub_tok = WordTokenizer()):
+        self.sub_tok = sub_tok
+    
+    def tokenize(self, data):
+        prev = None
+        for word in self.sub_tok.tokenize(data):
+            yield word
+            if prev is not None:
+                yield "{0} {1}".format(prev, word)
+            prev = word
+
+class LowercaseTokenizer:
+    '''
+    For each word on the sub-stream, return that word plus its
+    lowercase version if different. This should allow the
+    algorithm to handle letter case
+    '''        
+    def __init__(self, sub_tok = WordTokenizer()):
+        self.sub_tok = sub_tok
+    
+    def tokenize(self, data):
+        for word in self.sub_tok.tokenize(data):
+            yield word
+            lcword = word.lower()
+            if lcword != word:
+                yield lcword
+
+class MessageTokenizer:
+    def __init__(self, options=[]):
+        self.body_tokenizer = WordTokenizer()
+        if 'pairs' in options:
+            self.body_tokenizer = WordPairTokenizer(self.body_tokenizer)
+        if 'lower' in options:
+            self.body_tokenizer = LowercaseTokenizer(self.body_tokenizer)
+    
+    def generate_token_set(self, message):
+        return set([t for t in self.tokenize_message(message)])
     
     def tokenize_message(self, message):
         '''
@@ -18,21 +72,15 @@ class MessageTokenizer:
         '''
         for k, v in message.iteritems():
             if k == 'body':
-                for t in self.tokenize_message_body(v):
+                for t in self.body_tokenizer.tokenize(v):
                     yield t
             else:
                 yield '{0}*{1}'.format(k, v)
     
     def tokenize_message_body(self, body):
-        s = 0
-        i = 0
-        while i < len(body):
-            if body[i] in SEPARATORS:
-                if i > s:
-                    yield body[s:i]
-                s = i + 1
-            i = i + 1
-
+        for word in self.body_tokenizer.tokenize(body):
+            yield word
+    
 class Corpus:
     def __init__(self):
         self.data = {}
@@ -62,12 +110,13 @@ class Corpus:
             return 0
 
 class SpamProcessor:
-    def __init__(self):
+    def __init__(self, tok_options=[]):
         self.good_corpus = Corpus()
         self.bad_corpus = Corpus()
         self.num_good_msg = 0
         self.num_bad_msg = 0
-        self.tok = MessageTokenizer()
+        self.tok = MessageTokenizer(tok_options)
+        self.max_significant = 10
     
     def add_bad_message_tokens(self, tokens):
         self.bad_corpus.add_message_tokens(tokens)
@@ -97,26 +146,34 @@ class SpamProcessor:
         plist = [(k, v, math.fabs(v - 0.5)) for k, v in pmap.iteritems()]
         plist.sort(key=lambda x: x[2])
         plist.reverse()
-        slist = plist[:10]
-        pp = reduce(lambda x, y: x*y, [v[1] for v in slist])
-        np = reduce(lambda x, y: x*(1-y), [v[1] for v in slist])
-        if (pp+np == 0):
-            s = 0.5
+        if len(plist)/2 < self.max_significant:
+            slist = plist[:len(plist)/2]
         else:
-            s = pp/(pp+np)
-        return (s, plist)
+            slist = plist[:self.max_significant]
+        if len(slist) > 0:
+            pp = reduce(lambda x, y: x*y, [v[1] for v in slist])
+            np = reduce(lambda x, y: x*(1-y), [v[1] for v in slist])
+            if (pp+np == 0):
+                s = 0.5
+            else:
+                s = pp/(pp+np)
+            ppnp = (pp, np)
+        else:
+            s = 0.5
+            ppnp = (0, 0)
+        return (s, plist, slist, ppnp, tokens)
     
-    def tokenize_message(self, msg):
-        return self.tok.tokenize_message({ 'body': msg })
+    def generate_token_set(self, msg):
+        return self.tok.generate_token_set({ 'body': msg })
     
     def flag_as_good(self, msg):
-        self.add_good_message_tokens([t for t in self.tokenize_message(msg)])
+        self.add_good_message_tokens(self.generate_token_set(msg))
         
     def flag_as_bad(self, msg):
-        self.add_bad_message_tokens([t for t in self.tokenize_message(msg)])
+        self.add_bad_message_tokens(self.generate_token_set(msg))
         
     def score(self, msg):
-        s = self.score_message_tokens(self.tokenize_message(msg))
+        s = self.score_message_tokens(self.generate_token_set(msg))
         if (s[0] > 0.9):
             m = 'Bad'
         elif (s[0] < 0.1):
