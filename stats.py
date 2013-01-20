@@ -64,6 +64,13 @@ class StatsGenerator:
             return (len(lst), float(len(lst)/float(total)), float(len(lst)/float(matches)))
 
 if __name__ == '__main__':
+    import argparse
+    import json
+    arg_parser = argparse.ArgumentParser(description='Generate spam filter stats.')
+    arg_parser.add_argument('--json', '-j', action='store_true')
+    arg_parser.add_argument('--csv', '-c', action='store_true')
+    args = arg_parser.parse_args()
+    
     stats_gen = StatsGenerator()
     runs = [
             {
@@ -83,12 +90,37 @@ if __name__ == '__main__':
              'options': ['pairs', 'lower']
              }
             ]
-    for r in runs:
-        result = stats_gen.process_message_collection(r['sample_ratio'], r['options'])
-        r_out = {}
-        for k, v in result.iteritems():
-            if k == 'total':
-                r_out[k] = v
-            else:
-                r_out[k] = [v[0]] + ["{0:.2f}".format(100*vv) for vv in v[1:]]
-        print "Run: {0}\nResult: {1}\n".format(r, r_out)
+    results = [{
+                'run': r,
+                'result': stats_gen.process_message_collection(r['sample_ratio'], r['options'])
+                }
+               for r in runs
+               ]
+    if args.json:
+        print json.dumps(results)
+    elif args.csv:
+        print "Run,Matches,Neutrals,False positives,False negatives"
+        for rs in results:
+            run = rs['run']
+            result = rs['result']
+            run_cell = '"{0};{1}"'.format(
+                                     run['sample_ratio'],
+                                     format(','.join([str(vv) for vv in run['options']])))
+            print '{0},{1},{2},{3},{4}'.format(
+                                               run_cell,
+                                               result['matches'][1],
+                                               result['neutrals'][1],
+                                               result['false_positives'][1],
+                                               result['false_negatives'][1]
+                                               )
+    else:
+        for rs in results:
+            r = rs['run']
+            result = rs['result']
+            r_out = {}
+            for k, v in result.iteritems():
+                if k == 'total':
+                    r_out[k] = v
+                else:
+                    r_out[k] = [v[0]] + ["{0:.2f}".format(100*vv) for vv in v[1:]]
+            print "Run: {0}\nResult: {1}\n".format(r, r_out)
