@@ -110,13 +110,14 @@ class Corpus:
             return 0
 
 class SpamProcessor:
-    def __init__(self, tok_options=[]):
+    def __init__(self, tok_options=[], bias=1):
         self.good_corpus = Corpus()
         self.bad_corpus = Corpus()
         self.num_good_msg = 0
         self.num_bad_msg = 0
         self.tok = MessageTokenizer(tok_options)
         self.max_significant = 10
+        self.bias = bias
     
     def add_bad_message_tokens(self, tokens):
         self.bad_corpus.add_message_tokens(tokens)
@@ -136,7 +137,7 @@ class SpamProcessor:
         elif nbad == 0 or self.num_bad_msg == 0:
             p = 0.1
         else:
-            p = (float(nbad)/float(self.num_bad_msg)) / ((float(nbad)/float(self.num_bad_msg)) + (float(ngood)/float(self.num_good_msg)))
+            p = (float(nbad)/float(self.num_bad_msg)) / ((float(nbad)/float(self.num_bad_msg)) + (self.bias*float(ngood)/float(self.num_good_msg)))
         return p
     
     def score_message_tokens(self, tokens):

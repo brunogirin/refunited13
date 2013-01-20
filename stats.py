@@ -10,9 +10,9 @@ class StatsGenerator:
     def __init__(self):
         pass
     
-    def process_message_collection(self, sample_ratio, options=[]):
+    def process_message_collection(self, sample_ratio, options=[], bias=1):
         data = load_data.Data()
-        processor = spam.SpamProcessor(options)
+        processor = spam.SpamProcessor(options, bias)
         tagmap = {
                   'ham': 'Good',
                   'spam': 'Bad'
@@ -91,24 +91,62 @@ if __name__ == '__main__':
     runs = [
             {
              'sample_ratio': 0.05,
-             'options': []
+             'options': [],
+             'bias': 1
              },
             {
              'sample_ratio': 0.05,
-             'options': ['pairs']
+             'options': ['pairs'],
+             'bias': 1
              },
             {
              'sample_ratio': 0.05,
-             'options': ['lower']
+             'options': ['lower'],
+             'bias': 1
              },
             {
              'sample_ratio': 0.05,
-             'options': ['pairs', 'lower']
+             'options': ['pairs', 'lower'],
+             'bias': 1
+             },
+            {
+             'sample_ratio': 0.05,
+             'options': [],
+             'bias': 2
+             },
+            {
+             'sample_ratio': 0.05,
+             'options': ['pairs'],
+             'bias': 2
+             },
+            {
+             'sample_ratio': 0.1,
+             'options': [],
+             'bias': 1
+             },
+            {
+             'sample_ratio': 0.1,
+             'options': ['pairs'],
+             'bias': 1
+             },
+            {
+             'sample_ratio': 0.1,
+             'options': [],
+             'bias': 1.5
+             },
+            {
+             'sample_ratio': 0.1,
+             'options': ['pairs'],
+             'bias': 1.5
              }
             ]
     results = [{
                 'run': r,
-                'result': stats_gen.process_message_collection(r['sample_ratio'], r['options'])
+                'result': stats_gen.process_message_collection(
+                                                               r['sample_ratio'],
+                                                               r['options'],
+                                                               r['bias']
+                                                               )
                 }
                for r in runs
                ]
@@ -120,10 +158,14 @@ if __name__ == '__main__':
             run = rs['run']
             result = rs['result']
             if len(run['options']) == 0:
-                run_cell = '"{0}; {1}"'.format(run['sample_ratio'], 'none')
+                run_cell = '"{0}, {1}; {2}"'.format(
+                                                    run['sample_ratio'],
+                                                    run['bias'],
+                                                    'none')
             else:
-                run_cell = '"{0}; {1}"'.format(
+                run_cell = '"{0}, {1}; {2}"'.format(
                                      run['sample_ratio'],
+                                     run['bias'],
                                      format(', '.join([str(vv) for vv in run['options']])))
             print '{0},{1},{2},{3},{4},{5},{6},{7},{8}'.format(
                                                run_cell,
